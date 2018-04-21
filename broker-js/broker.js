@@ -11,6 +11,14 @@ function AddButton() {
 };
 AddButton();
 
+function AddAnotherButton() {
+    var button = document.createElement("button");
+    $(button).html("Modal!");
+    $(button).click(BrokerUi.GetModalWindow().Show);
+    $(".inventory_rightnav").prepend(button);
+};
+AddAnotherButton();
+
 function buttonClickCallback() {
     sendSellRequest({
         sessionId: GlobalContext.g_sessionID,
@@ -22,6 +30,7 @@ function buttonClickCallback() {
         failureCallback: function(d){console.log("Failure!"); console.log(d)}
     });
 }
+
 
 // Request functions
 /**

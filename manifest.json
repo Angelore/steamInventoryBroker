@@ -22,7 +22,11 @@
             ],
             "js": [
                 "broker-js/jquery-3.3.1.min.js",
+                "broker-js/broker-ui.js",
                 "broker-js/broker.js"
+            ],
+            "css": [
+                "css/broker.css"
             ]
         }
     ]
