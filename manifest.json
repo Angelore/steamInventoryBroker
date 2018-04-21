@@ -1,0 +1,29 @@
+{
+    "manifest_version": 2,
+    "name": "Steam Inventory Broker",
+    "version": "Alpha",
+
+    "description": "Helps you to get rid of the unwanted items by selling them in bulk.",
+
+    "icons": {
+        "128": "images/icon.png"
+    },
+
+    "permissions": [
+        "*://steamcommunity.com/market/*",
+        "webRequest"
+    ],
+
+    "content_scripts": [
+        {
+            "matches": [
+                "*://steamcommunity.com/id/*/inventory/*",
+                "*://steamcommunity.com/profiles/*/inventory/"
+            ],
+            "js": [
+                "broker-js/jquery-3.3.1.min.js",
+                "broker-js/broker.js"
+            ]
+        }
+    ]
+}
