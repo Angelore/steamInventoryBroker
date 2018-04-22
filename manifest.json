@@ -14,6 +14,10 @@
         "webRequest"
     ],
 
+    "web_accessible_resources": [
+        "modal.html"
+    ],
+
     "content_scripts": [
         {
             "matches": [

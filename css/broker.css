@@ -1,4 +1,4 @@
-.broker#overlay {
+#broker-overlay {
     position: fixed; 
     top: 0;
     left: 0;
@@ -6,15 +6,17 @@
     height: 100%;
     background: #000;
     opacity: 0.3;
+    z-index: 20; /* normally this is not needed, but some Steam elements get assigned z-i:10 in responsive mode, thereby hiding elements without z-i */
 }
 
-.broker#modal {
+#broker-modal {
     position:fixed;
     background:rgba(0,0,0,0.2);
     padding:8px;
+    z-index: 20;
 }
 
-.broker#content {
+#broker-modal-content {
     background:#fff;
     padding:10px;
 }

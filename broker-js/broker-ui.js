@@ -1,6 +1,15 @@
 function GetModalWindow(){
-    var overlay = $('<div id="overlay" class="broker"></div>');
-    var modal = $('<div id="modal" class="broker"><div id="content">Test!</div></div>');
+    var overlay = $('<div id="broker-overlay" class="broker"></div>');
+    var modal = null;
+    $.get({
+        url: browser.extension.getURL("modal.html"),
+        dataType: "html",
+        async: false
+    })
+    .done(function(data){
+        modal = $(data);
+    });
+
     overlay.hide();
     modal.hide();
     $('body').append(overlay, modal);
@@ -46,6 +55,6 @@ function GetModalWindow(){
 
 var BrokerUi = new function(){
     return {
-        CreateModalWindow: CreateModalWindow
+        GetModalWindow: GetModalWindow
     }
 }();
