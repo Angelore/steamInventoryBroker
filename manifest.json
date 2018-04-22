@@ -15,7 +15,7 @@
     ],
 
     "web_accessible_resources": [
-        "modal.html"
+        "html/modal.html"
     ],
 
     "content_scripts": [

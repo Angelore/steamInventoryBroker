@@ -1,34 +1,75 @@
-// DEBUG: Indicator of the addon wokring
-document.body.style.border = "5px solid green";
-
+// Initialization
 var GlobalContext = window.wrappedJSObject;
+var Modal = BrokerUi.GetModalWindow();
 
-function AddButton() {
-    var button = document.createElement("button");
-    $(button).html("Click me!");
-    $(button).click(buttonClickCallback);
-    $(".inventory_rightnav").prepend(button);
-};
-AddButton();
+BrokerUi.AddBrokerButton(Modal.Show);
 
-function AddAnotherButton() {
-    var button = document.createElement("button");
-    $(button).html("Modal!");
-    $(button).click(BrokerUi.GetModalWindow().Show);
-    $(".inventory_rightnav").prepend(button);
-};
-AddAnotherButton();
+$('#broker-load-inventory-button', Modal.Window).click(function () {
+    LoadCompleteInventory().then((result) => { result ? $(this).html("Loaded!") : $(this).html("Timeout") });
+});
 
-function buttonClickCallback() {
-    sendSellRequest({
-        sessionId: GlobalContext.g_sessionID,
-        appId: 753,
-        contextId: "6",
-        assetId: "3976420909",
-        confirmedPrice: 100,
-        successCallback: function(d){console.log("Success! Item was sold."); console.log(d)},
-        failureCallback: function(d){console.log("Failure!"); console.log(d)}
+// function AddButton() {
+//     var button = document.createElement("button");
+//     $(button).html("Click me!");
+//     $(button).click(buttonClickCallback);
+//     $(".inventory_rightnav").prepend(button);
+// };
+// AddButton();
+
+// function buttonClickCallback() {
+//     sendSellRequest({
+//         sessionId: GlobalContext.g_sessionID,
+//         appId: 753,
+//         contextId: "6",
+//         assetId: "3976420909",
+//         confirmedPrice: 100,
+//         successCallback: function(d){console.log("Success! Item was sold."); console.log(d)},
+//         failureCallback: function(d){console.log("Failure!"); console.log(d)}
+//     });
+// }
+
+// Inventory functions
+/**
+ * Completely populates the inventory, including child inventories. By default, Steam only loads a small subset of items.
+ */
+function LoadCompleteInventory() {
+    //return XPCNativeWrapper.unwrap(GlobalContext.g_ActiveInventory).LoadCompleteInventory();
+
+    // Hack time!
+    // Since there is no way for me to trigger LoadCompleteInventory manually, I will trigger it by manipulating the filter field
+    return new Promise(function (resolve, reject) {
+        $("#filter_control").val("aaa").trigger("click").val("").trigger("click");
+        LoadCompleteInventoryAux(resolve);
     });
+}
+
+function LoadCompleteInventoryAux(resolve, iteration) {
+    var timeout = 60000;
+    var iterationSpan = 100;
+    iteration = iteration || 0;
+
+    if (GlobalContext.g_ActiveInventory.m_bFullyLoaded) {
+        resolve(true);
+        return;
+    }
+
+    if (iteration * iterationSpan >= timeout) {
+        resolve(false);
+        return;
+    }
+
+    iteration++;
+    setTimeout(function () {
+        LoadCompleteInventoryAux(resolve, iteration);
+    }, iterationSpan);
+}
+
+/**
+ * @param {string[]} tagsArray Tags to be matched
+ * @returns {object[]} Objects that match the tags
+ */
+function FindItemsWithMatchingTags(tagsArray) {
+
 }
 
 
@@ -39,7 +80,7 @@ function buttonClickCallback() {
 */
 
 /**
- * @param {object} options - Request options
+ * @param {object} options Request options
  * @param {string} options.sessionId
  * @param {number} options.appId
  * @param {number} options.contextId
@@ -83,12 +124,11 @@ function sendSellRequest(options) {
  * Get a page-assigned XMLHttpRequest object to send requests with cookies and referrer enabled
  * More info here: https://discourse.mozilla.org/t/webextension-xmlhttprequest-issues-no-cookies-or-referrer-solved/11224/17
  */
-function getXMLHttp(){
+function getXMLHttp() {
     try {
         return XPCNativeWrapper(new window.wrappedJSObject.XMLHttpRequest());
     }
-    catch(evt){
+    catch (evt) {
         return new XMLHttpRequest();
     }
- }
- 
+}
