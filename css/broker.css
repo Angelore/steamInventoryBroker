@@ -18,5 +18,32 @@
 
 #broker-modal-content {
     background:#fff;
-    padding:10px;
+    padding: 5px;
+    width: 300px;
+}
+
+/* Header */
+.broker-header {
+    height: 24px;
+    background-color: rgb(10, 60, 90);
+}
+
+.broker-close-button {
+    float: right;
+    line-height: 24px;
+    padding: 0 10px;
+}
+
+.broker-header-text {
+    font-size: 12px;
+    vertical-align: middle;
+    padding: 0 3px 0 10px;
+    color: #afbfce;
+    line-height: 24px;
+}
+
+.broker-version {
+    font-size: 8px;
+    vertical-align: super
+    color: #909090;
 }

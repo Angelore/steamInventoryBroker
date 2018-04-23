@@ -21,8 +21,8 @@ function GetModalWindow() {
         left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
 
         modal.css({
-            top: top + $(window).scrollTop(),
-            left: left + $(window).scrollLeft()
+            top: top,
+            left: left
         });
     };
 
