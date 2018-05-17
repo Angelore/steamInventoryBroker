@@ -8,6 +8,18 @@ $('#broker-load-inventory-button', Modal.Window).click(function () {
     LoadCompleteInventory().then((result) => { result ? $(this).html("Loaded!") : $(this).html("Timeout") });
 });
 
+$('#broker-test-button', Modal.Window).click(function(){
+    if (GlobalContext.g_ActiveInventory.selectedItem != null) {
+        sendPriceRequest({
+            item: GlobalContext.g_ActiveInventory.selectedItem,
+            countryCode: GlobalContext.g_strCountryCode,
+            currency: typeof( GlobalContext.g_rgWalletInfo ) != 'undefined' ? GlobalContext.g_rgWalletInfo['wallet_currency'] : 1,
+            successCallback: function(data){ alert(JSON.stringify(data)) },
+            failureCallback: function(data){ alert(JSON.stringify(data)) }
+        });
+    }
+});
+
 // function AddButton() {
 //     var button = document.createElement("button");
 //     $(button).html("Click me!");
@@ -119,6 +131,51 @@ function sendSellRequest(options) {
         options.failureCallback(data);
     });
 }
+
+/**
+ * @param {object} options Request options
+ * @param {object} options.item Selected item
+ * @param {string} options.countryCode Country code
+ * @param {string} options.currency Currency
+ * @param {requestCallback} options.successCallback
+ * @param {requestCallback} options.failureCallback
+ */
+function sendPriceRequest(options) {
+    var marketHashName = getMarketHashName(options.item.description);
+    $.ajax({
+        url: 'https://steamcommunity.com/market/priceoverview/',
+        type: 'GET',
+        data: {
+            country: options.countryCode, // g_strCountryCode,
+            currency: options.currency, // typeof( g_rgWalletInfo ) != 'undefined' ? g_rgWalletInfo['wallet_currency'] : 1,
+            appid: options.item.appid,
+            market_hash_name: marketHashName
+        },
+        xhr: getXMLHttp
+    }).done(function (data) {
+        if (data.responseJSON && data.responseJSON.success) {
+            options.successCallback(data);
+        }
+        else {
+            options.failureCallback(data);
+        }
+    }).fail(function (jqxhr) {
+        var data = $.parseJSON(jqxhr.responseText);
+        options.failureCallback(data);
+    });
+}
+
+
+// Steam economy duplicate functions
+function getMarketHashName(rgDescriptionData) {
+    if (typeof rgDescriptionData.market_hash_name != 'undefined')
+        return rgDescriptionData.market_hash_name;
+    else if (typeof rgDescriptionData.market_name != 'undefined')
+        return rgDescriptionData.market_name;
+    else
+        return rgDescriptionData.name;
+}
+
 
 /**
  * Get a page-assigned XMLHttpRequest object to send requests with cookies and referrer enabled
