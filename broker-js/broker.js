@@ -9,15 +9,26 @@ $('#broker-load-inventory-button', Modal.Window).click(function () {
 });
 
 $('#broker-test-button', Modal.Window).click(function(){
-    if (GlobalContext.g_ActiveInventory.selectedItem != null) {
-        sendPriceRequest({
-            item: GlobalContext.g_ActiveInventory.selectedItem,
-            countryCode: GlobalContext.g_strCountryCode,
-            currency: typeof( GlobalContext.g_rgWalletInfo ) != 'undefined' ? GlobalContext.g_rgWalletInfo['wallet_currency'] : 1,
-            successCallback: function(data){ alert(JSON.stringify(data)) },
-            failureCallback: function(data){ alert(JSON.stringify(data)) }
-        });
+    // getting price test
+    // if (GlobalContext.g_ActiveInventory.selectedItem != null) {
+    //     sendPriceRequest({
+    //         item: GlobalContext.g_ActiveInventory.selectedItem,
+    //         countryCode: GlobalContext.g_strCountryCode,
+    //         currency: typeof( GlobalContext.g_rgWalletInfo ) != 'undefined' ? GlobalContext.g_rgWalletInfo['wallet_currency'] : 1,
+    //         successCallback: function(data){ alert(JSON.stringify(data)) },
+    //         failureCallback: function(data){ alert(JSON.stringify(data)) }
+    //     });
+    // }
+
+    //var sItems = GlobalContext.g_ActiveInventory.m_rgItemElements.map(e => e[0].rgItem); Doesn't work somehow?!
+    var sItems = [];
+    var rgElements = GlobalContext.g_ActiveInventory.m_rgItemElements;
+    for (let index = 0; index < rgElements.length; index++) {
+        const element = rgElements[index];
+        sItems.push(element[0].rgItem);
     }
+    var rItems = FindItemsWithMatchingTerms(["refined metal"], sItems);
+    console.log(rItems);
 });
 
 // function AddButton() {
@@ -78,10 +89,37 @@ function LoadCompleteInventoryAux(resolve, iteration) {
 
 /**
  * @param {string[]} tagsArray Tags to be matched
+ * @param {object[]} itemsSource Array with (rg)items in which to perform search
  * @returns {object[]} Objects that match the tags
  */
-function FindItemsWithMatchingTags(tagsArray) {
+function FindItemsWithMatchingTerms(termsArray, itemsSource) {
+    let resultArray = [];
 
+    for (let index = 0; index < itemsSource.length; index++) {
+        const item = itemsSource[index];
+        let name = item.description.name.toLowerCase();
+        let type = item.description.type.toLowerCase();
+        let tags = item.description.tags;
+
+        for (let termsIndex = 0; termsIndex < termsArray.length; termsIndex++) {
+            const term = termsArray[termsIndex].toLowerCase();
+            if (name.includes(term) || type.includes(term)) {
+                resultArray.push(item);
+                continue;
+            }
+
+            for (let tagIndex = 0; tagIndex < tags.length; tagIndex++) {
+                const tag = tags[tagIndex];
+                let tagName = tag.localized_tag_name.toLowerCase();
+                if (tagName.includes(term)) {
+                    resultArray.push(item);
+                    continue;
+                }
+            }
+        }
+    }
+
+    return resultArray;
 }
 
 
