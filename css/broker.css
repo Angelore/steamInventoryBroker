@@ -47,3 +47,10 @@
     vertical-align: super;
     color: #909090;
 }
+
+/* Item container */
+#broker-item-container {
+    max-height: 600px;
+    overflow-x: auto;
+    overflow-y: auto;
+}

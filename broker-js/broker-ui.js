@@ -6,9 +6,9 @@ function GetModalWindow() {
         dataType: "html",
         async: false
     })
-        .done(function (data) {
-            modal = $(data);
-        });
+    .done(function (data) {
+        modal = $(data);
+    });
 
     overlay.hide();
     modal.hide();

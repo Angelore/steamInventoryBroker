@@ -21,15 +21,42 @@ $('#broker-test-button', Modal.Window).click(function(){
     // }
 
     //var sItems = GlobalContext.g_ActiveInventory.m_rgItemElements.map(e => e[0].rgItem); Doesn't work somehow?!
-    var sItems = [];
-    var rgElements = GlobalContext.g_ActiveInventory.m_rgItemElements;
-    for (let index = 0; index < rgElements.length; index++) {
-        const element = rgElements[index];
-        sItems.push(element[0].rgItem);
-    }
-    var rItems = FindItemsWithMatchingTerms(["refined metal"], sItems);
-    console.log(rItems);
+    var searchString = $("#broker-tag-input", Modal.Window).val();
+    var searchableItems = GetSearchableItemsList();
+    var rItems = FindItemsWithMatchingTerms([searchString], searchableItems);
+
+    $.each(rItems, (key, val) => {
+        let p = document.createElement("p");
+        $(p).html(val.description.name);
+        $(p)[0].item = val;
+        $("#broker-item-container", Modal.Window).append(p);
+    });
+
+    //console.log(rItems);
 });
+
+// Only 20 requests at a time go through, rest 429. Send in batches?
+$('#broker-get-prices-button', Modal.Window).click(function(){
+    let elements = $("#broker-item-container p", Modal.Window);
+    let rollingTimeout = 50;
+    elements.each((index, elem) => setTimeout(() => GetPrice(elem), rollingTimeout*index));
+});
+
+function GetPrice(element) {
+    sendPriceRequest({
+        item: element.item,
+        countryCode: GlobalContext.g_strCountryCode,
+        currency: typeof( GlobalContext.g_rgWalletInfo ) != 'undefined' ? GlobalContext.g_rgWalletInfo['wallet_currency'] : 1,
+        successCallback: function(data){
+            $(element).html(element.item.description.name + ": " + data.lowest_price)
+        },
+        failureCallback: function(data, jqxhr){
+            let cooldown = jqxhr.getResponseHeader("Retry-After") || 10000;
+            if (jqxhr.status == 429)
+                setTimeout(() => { GetPrice(element) }, cooldown);
+        }
+    });
+}
 
 // function AddButton() {
 //     var button = document.createElement("button");
@@ -67,6 +94,7 @@ function LoadCompleteInventory() {
 }
 
 function LoadCompleteInventoryAux(resolve, iteration) {
+    // For very slow connections, it might be possible to move to checking the "loading" class of this.m_$Inventory
     var timeout = 60000;
     var iterationSpan = 100;
     iteration = iteration || 0;
@@ -88,6 +116,30 @@ function LoadCompleteInventoryAux(resolve, iteration) {
 }
 
 /**
+ * @returns {object[]} Array of rgItems
+ */
+function GetSearchableItemsList() {
+    var searchableItems = [];
+    var rgElementsHolder = [];
+
+    if (GlobalContext.g_ActiveInventory.m_cInventoriesLoaded == undefined) {
+        rgElementsHolder.push(GlobalContext.g_ActiveInventory.m_rgItemElements);
+    }
+    else {
+        $.each(GlobalContext.g_ActiveInventory.m_rgChildInventories, (key, val) => rgElementsHolder.push(val.m_rgItemElements));
+    }
+    for (let holderIndex = 0; holderIndex < rgElementsHolder.length; holderIndex++) {
+        const rgElements = rgElementsHolder[holderIndex];
+        for (let index = 0; index < rgElements.length; index++) {
+            const element = rgElements[index];
+            searchableItems.push(element[0].rgItem);
+        }
+    }
+
+    return searchableItems;
+}
+
+/**
  * @param {string[]} tagsArray Tags to be matched
  * @param {object[]} itemsSource Array with (rg)items in which to perform search
  * @returns {object[]} Objects that match the tags
@@ -101,10 +153,11 @@ function FindItemsWithMatchingTerms(termsArray, itemsSource) {
         let type = item.description.type.toLowerCase();
         let tags = item.description.tags;
 
+        let termsMatched = 0;
         for (let termsIndex = 0; termsIndex < termsArray.length; termsIndex++) {
             const term = termsArray[termsIndex].toLowerCase();
             if (name.includes(term) || type.includes(term)) {
-                resultArray.push(item);
+                termsMatched++;
                 continue;
             }
 
@@ -112,11 +165,17 @@ function FindItemsWithMatchingTerms(termsArray, itemsSource) {
                 const tag = tags[tagIndex];
                 let tagName = tag.localized_tag_name.toLowerCase();
                 if (tagName.includes(term)) {
-                    resultArray.push(item);
-                    continue;
+                    termsMatched++;
+                    break;
                 }
             }
+
+            // Probably don't need to go on after at least one term failed. Feels too "goto-ish though"
+            break;
         }
+
+        if (termsMatched == termsArray.length)
+            resultArray.push(item);
     }
 
     return resultArray;
@@ -190,16 +249,16 @@ function sendPriceRequest(options) {
             market_hash_name: marketHashName
         },
         xhr: getXMLHttp
-    }).done(function (data) {
-        if (data.responseJSON && data.responseJSON.success) {
+    }).done(function (data, textStatus, jqXHR) {
+        if (data && data.success) {
             options.successCallback(data);
         }
         else {
-            options.failureCallback(data);
+            options.failureCallback(data, jqXHR);
         }
     }).fail(function (jqxhr) {
         var data = $.parseJSON(jqxhr.responseText);
-        options.failureCallback(data);
+        options.failureCallback(data, jqxhr);
     });
 }
 
